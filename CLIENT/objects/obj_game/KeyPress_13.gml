@@ -1,3 +1,3 @@
-if room != rm_main
-	exit; //so that this doesnt interfere with the chat room
+if (room != rm_main || !username_ready) exit;
+connection_error = "";
 room_goto(rm_client);

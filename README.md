@@ -1,66 +1,60 @@
 # Multiplayer Network Racing Game
 
-A 2D retro-style top-down multiplayer racing game. The game allows multiple players to connect to a server, race in real-time, set usernames, and communicate via an integrated chatbox.
+A small top-down multiplayer racing project originally built in 2022 to explore TCP sockets and client–server networking in GML. Updated in October 2026 for GameMaker LTS 2026, with keyboard driving and a three-lap race system. The original track and car artwork are retained.
 
 ## Features
 
-### Gameplay
-- **Multiplayer Racing**: Players can join a shared server to race against each other.
-- **Chat System**: Real-time messaging between players.
-- **Custom Usernames**: Displayed above each player's car in the game.
+- A separate TCP server supports up to five clients, with usernames and synchronized player movement.
+- Arrow-key acceleration, braking and steering, with track boundaries.
+- A host-controlled countdown, ordered checkpoints, three laps, race times and finish order.
+- Shared player and server chat, with bounded message lengths and history.
+- Packet checks, movement corrections, socket/resource cleanup and connection-loss detection.
 
-### Design
-- **Retro Arcade Aesthetic**: Minimalistic 2D sprites and backgrounds for a classic feel.
-- **Interactive UI**: Intuitive menus, player prompts, and chatbox interaction.
-- **Track Design**: Simple, engaging tracks for competitive racing.
+## Build and run
 
-### Networking
-- **Client-Server Architecture**: Supports up to 5 players simultaneously.
-- **Synchronization**: Player positions and messages are updated in real-time.
-- **Scalable Design**: Easy to expand with additional features.
+Open `SERVER/SERVER.yyp` and `CLIENT/CLIENT.yyp` in **GameMaker LTS 2026**. The tested setup uses IDE **2026.0.0.16**, runtime **2026.0.0.23**, macOS **13 or newer**, and **YYC** native compilation. Xcode and GameMaker's native macOS compiler module are required for this target. Other platforms have not been verified in this update.
 
-### Development Tools
-- **Game Engine**: [GameMaker Studio 2](https://www.yoyogames.com/en/gamemaker).
-- **Programming Language**: GML (GameMaker Language).
-- **Resources**: GameMaker manual, online tutorials, and forums.
+1. Select macOS and YYC, then build/run the server.
+2. Build/run a client, enter a username, and press Enter to connect.
+3. Repeat for additional clients, up to five players.
+4. Focus the server and press Space to start the countdown.
 
-## Installation and Setup
+The client currently connects to `127.0.0.1:10000`, so run the server and clients on the same computer for this demo. Configure the address in `CLIENT/objects/obj_client/Create_0.gml` if adapting it for a LAN.
 
-### Prerequisites
-- [GameMaker Studio 2](https://www.yoyogames.com/en/gamemaker) installed on your system.
+Mac build output uses `~/gamemakerstudio2`. Keep the generated apps outside `/tmp`: the tested runner failed to locate its game resources when launched from a temporary bundle path. The VM runner also failed before loading the game on the tested Mac; use YYC. Compiled apps are not included in this source repository.
 
-### Files Included
-1. **Server Project**: `SERVER.yyp`
-2. **Client Project**: `CLIENT.yyp`
+## Controls and race rules
 
-### Running the Game
-1. Open the `SERVER.yyp` file in GameMaker Studio 2.
-2. Run the server project to start hosting.
-3. Open the `CLIENT.yyp` file in GameMaker Studio 2 for each client.
-4. Enter a unique username and connect to the server's IP and port.
-5. Begin the game and enjoy real-time multiplayer racing!
+| Control | Action |
+| --- | --- |
+| Up | Hold to accelerate |
+| Down | Hold to brake |
+| Left / Right | Steer while moving |
+| Enter | Open chat, then send the typed message |
+| Space, in the server window | Start or restart a race |
 
-## Controls
+Join before the countdown to participate. Players joining an active race wait for the next start. Drive clockwise through the right, bottom and left checkpoints, then across the chequered finish line. All checkpoints must be visited in order to complete a lap; crossing the finish line alone does not count. Complete three laps to finish. The server records the elapsed time and finish order.
 
-- **Movement**: Mouse clicks (alternate controls can be implemented, such as arrow keys or WASD).
-- **Chat**: Press `Enter` to toggle chat. Type your message and press `Enter` to send.
+Track edges stop the car. Chat pauses the local driver's movement. If server updates stop for five seconds, clients return to their connection screen. Restart the server and press Enter in each client to reconnect.
 
-## Known Issues and Limitations
-- **Movement**: Initially designed for arrow key control, now simplified to mouse clicks to support multiplayer.
-- **Score System**: Currently not implemented.
-- **Maximum Players**: Limited to 5 concurrent connections.
-- **Highscore Table**: Planned for future updates.
+## Implementation and cleanup
 
-## Future Improvements
-- Implement a highscore system with a leaderboard.
-- Add a scoring mechanism and game win conditions.
-- Restore arrow/WASD key controls for racing.
-- Enhance graphics and include background music.
+The server maintains socket-to-player maps and relays binary movement and chat packets. Socket IDs use 32-bit fields, and positions and angles use floating-point fields. Join packets preserve existing players' positions and directions. Local drivers do not receive stale echoes of their own movement.
 
-## Feedback and Contributions
-Feel free to open issues or pull requests to suggest improvements or contribute to the project.
+The server validates packet lengths, terminated strings, numeric values, sender identity, track positions and movement distances. Invalid movement receives a position correction. Names are capped at 24 characters, chat messages at 120 characters and history at five messages; visible chat wraps within the window. Incoming packets are limited to 1 KiB. Incomplete handshakes, duplicate joins and missing player instances are guarded, and sockets, buffers, lists and maps are cleaned up.
 
-### Acknowledgments
-- [GameMaker Studio 2 Manual](https://manual.yoyogames.com/)
-- Tutorials from the GameMaker community and YouTube channels.
-- Feedback from family and peers during development.
+Race progress is tracked by the server. Movement is still calculated on clients, making this an approachable teaching demo rather than a fully authoritative simulation or competitive anti-cheat system. Cars do not collide with one another. There is no persistent high-score database.
+
+## Validation
+
+Both native YYC apps compiled successfully. Runtime checks covered two-player joins, arrow-key movement synchronization, player/server chat, countdown and restart, a truncated movement packet, and client recovery after server loss and immediate restart.
+
+A disposable test client crossed the finish early without receiving a lap, then completed three ordered circuits and received first place. The final integration test reported:
+
+```text
+RACE_TEST_PASS: three ordered laps, first place, elapsed 29.32
+```
+
+## Project history
+
+The original 2022 source remains in Git history. The 2026 update migrates project resources, replaces the blocking username prompt with an asynchronous dialog, and adds the racing and networking fixes described above.

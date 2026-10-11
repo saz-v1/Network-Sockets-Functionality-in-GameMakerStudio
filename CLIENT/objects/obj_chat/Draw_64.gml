@@ -1,22 +1,17 @@
+draw_race_hud();
 draw_set_halign(fa_left);
 draw_set_valign(fa_middle);
 draw_set_colour(c_white);
-for(var i = 0; i < ChatSize; i++) //if chatsize I increments by 1 so we atleast display 5 messages
-{
-	draw_text(100, 360 - (16*i), ds_list_find_value(global.chat, i))
-	//this will draw out our chat
+draw_set_valign(fa_top);
+var _chat_y = 399;
+for (var _i = 0; _i < min(ChatSize, ds_list_size(global.chat)); _i++) {
+    var _text = global.chat[| _i];
+    _chat_y -= string_height_ext(_text, 18, 672) + 4;
+    if (_chat_y < 285) break;
+    draw_text_ext(24, _chat_y, _text, 18, 672);
 }
-
-if active = true
-{
-	draw_set_colour(c_red);
-	draw_text_transformed(100,400, "> " +chat_text , 2 , 2, 0);
-}//when our chat is on the colour will be set to red and will draw out our chat message
-else
-{
-	draw_set_colour(c_black);
-	draw_text_transformed(100,400, "> ", 2 , 2, 0);
-	//and when the chat is off the colour will be black 
-}
-
-	
+draw_set_valign(fa_middle);
+draw_set_colour(active ? c_yellow : c_white);
+draw_text(24, 415, active ? "> " + chat_text : "Enter to chat");
+draw_set_colour(c_white);
+draw_text(24, 470, "Up: accelerate  Down: brake  Left/Right: steer");

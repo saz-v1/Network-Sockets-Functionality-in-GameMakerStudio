@@ -1,5 +1,5 @@
 {
-  "$GMOperaGXOptions":"",
+  "$GMOperaGXOptions":"v1",
   "%Name":"operagx",
   "name":"operagx",
   "option_operagx_display_cursor":true,
@@ -9,7 +9,7 @@
   "option_operagx_internalShareUrl":"",
   "option_operagx_interpolate_pixels":true,
   "option_operagx_mod_editUrl":"",
-  "option_operagx_mod_game_name":"${project_name}",
+  "option_operagx_mod_game_name":"CLIENT",
   "option_operagx_mod_guid":"",
   "option_operagx_mod_internalShareUrl":"",
   "option_operagx_mod_next_version":"1.0.0.0",
@@ -23,6 +23,7 @@
   "option_operagx_team_id":"6bdeb29f-96d4-4331-8691-8aedf158d6e9",
   "option_operagx_team_name":"(6bdeb29f-96d4-4331-8691-8aedf158d6e9) studio",
   "option_operagx_texture_page":"2048x2048",
+  "option_operagx_transparent_background":false,
   "option_operagx_version":"1.0.0.2",
   "resourceType":"GMOperaGXOptions",
   "resourceVersion":"2.0",

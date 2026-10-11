@@ -1,55 +1,39 @@
-type_event = ds_map_find_value(async_load, "type");
-//creates a ds map which u can get data from 
-switch(type_event)
-{
-	case network_type_connect:
-	    socket = ds_map_find_value(async_load, "socket");
-		//so this pulls from the ds map and gets the socket of the client that just connected
-		ds_list_add(socket_list, socket);
-		buffer_seek(server_buffer, buffer_seek_start, 0);
-		buffer_write(server_buffer, buffer_u8, network.player_establish);
-		buffer_write(server_buffer, buffer_u8, socket);
-		network_send_packet(socket, server_buffer, buffer_tell(server_buffer));
-		//this will tel the client that just connected to send data now that it has been connected
+var _type = async_load[? "type"];
+switch (_type) {
+    case network_type_connect:
+        var _socket = async_load[? "socket"];
+        if (ds_list_find_index(socket_list, _socket) >= 0) break;
+        network_set_config(network_config_avoid_time_wait, _socket);
+        network_set_config(network_config_message_size_limit, _socket, 1024);
+        ds_list_add(socket_list, _socket);
+        buffer_seek(server_buffer, buffer_seek_start, 0);
+        buffer_write(server_buffer, buffer_u8, network.player_establish);
+        buffer_write(server_buffer, buffer_u32, _socket);
+        network_send_packet(_socket, server_buffer, buffer_tell(server_buffer));
+        break;
 
-		break;
-	
-	case network_type_disconnect:
-	    socket = ds_map_find_value(async_load, "socket");
-	    ds_list_delete(socket_list,ds_list_find_index(socket_list, socket));
-	    //finds the socket postion and then deletes it from the socket list
-	    //this way information isnt sent to clients who no longer exist
-	
-	
-        var i = 0
-	    repeat(ds_list_size(socket_list))
-	    {
-			var _sock = ds_list_find_value(socket_list, i);
-			buffer_seek(server_buffer, buffer_seek_start, 0);
-			buffer_write(server_buffer, buffer_u8, network.player_disconnect);
-			buffer_write(server_buffer, buffer_u8, socket);
-			network_send_packet(_sock, server_buffer, buffer_tell(server_buffer));
-		    //this tells all the clients that a player with that socket has disconnected
-			
-			i++
-		}
-	
-	
-		with(ds_map_find_value(socket_to_instanceid,socket))
-		{
-			instance_destroy();//when the player disconnects we can get the instancneID and destroy it 
-		}
-		ds_map_delete(socket_to_instanceid, socket); //this is to make sure the ID is deleted from the ds map
-		break;
-	
-	case network_type_data:
-		buffer = ds_map_find_value(async_load, "buffer");
-		socket = ds_map_find_value(async_load, "id"); 
-		//finds the ID of the client who just sent the info
-		buffer_seek(buffer,buffer_seek_start,0);
-		//goes to the very start of the buffer to make sure it gets the first piece of information
-		received_packet(buffer,socket); 
-		//goes through list of actions and finds what the player did and transmits that infomration 
-		break;
-	
+    case network_type_disconnect:
+        var _socket = async_load[? "socket"];
+        var _index = ds_list_find_index(socket_list, _socket);
+        if (_index >= 0) ds_list_delete(socket_list, _index);
+        // A connection can close before completing the username handshake.
+        if (!ds_map_exists(socket_to_instanceid, _socket)) break;
+        var _player = socket_to_instanceid[? _socket];
+        if (instance_exists(_player)) with (_player) instance_destroy();
+        ds_map_delete(socket_to_instanceid, _socket);
+        buffer_seek(server_buffer, buffer_seek_start, 0);
+        buffer_write(server_buffer, buffer_u8, network.player_disconnect);
+        buffer_write(server_buffer, buffer_u32, _socket);
+        for (var _i = 0; _i < ds_list_size(socket_list); _i++) {
+            network_send_packet(socket_list[| _i], server_buffer, buffer_tell(server_buffer));
+        }
+        break;
+
+    case network_type_data:
+        var _socket = async_load[? "id"];
+        if (ds_list_find_index(socket_list, _socket) < 0) break;
+        var _buffer = async_load[? "buffer"];
+        buffer_seek(_buffer, buffer_seek_start, 0);
+        received_packet(_buffer, _socket, async_load[? "size"]);
+        break;
 }

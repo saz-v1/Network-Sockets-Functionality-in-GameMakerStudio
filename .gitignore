@@ -1,0 +1,8 @@
+# GameMaker local state and build output
+*.local
+*.yydebug
+.DS_Store
+build/
+GM_MAC/
+.cache/
+*.log

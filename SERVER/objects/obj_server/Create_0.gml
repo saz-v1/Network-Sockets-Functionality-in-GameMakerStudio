@@ -1,24 +1,18 @@
-enum network
-{
-	player_establish,
-	player_connect,
-	player_joined,
-	player_disconnect,
-	move,
-	chat,
+enum network {
+    player_establish, player_connect, player_joined,
+    player_disconnect, move, chat, race_state, correction
 }
-
-
-port = 1000
+port = 10000;
 MaxClients = 5;
-network_create_server(network_socket_tcp, port, MaxClients);
-//this sets the server to TCP the other options are WS or UDP
-server_buffer = buffer_create(10240,buffer_fixed,1);
-//takes the buffer and goes into a packet and sends the packet somewhere
+server_buffer = buffer_create(10240, buffer_fixed, 1);
 socket_list = ds_list_create();
-//socket is the unique ID of a client that has connnected
 socket_to_instanceid = ds_map_create();
-//server is storing all of the sockets of the player, and based on the socket we can get the instance ID of the player
+playerSpawn_x = 100;
+playerSpawn_y = 100;
+server_socket = network_create_server(network_socket_tcp, port, MaxClients);
+if (server_socket < 0) show_error("Could not start server on port " + string(port), true);
+network_set_config(network_config_avoid_time_wait, server_socket);
+window_set_caption("Network Server | TCP port " + string(port));
 
-playerSpawn_x =100;
-playerSpawn_y =100;
+global.race = { phase: 0, countdown: 0, elapsed: 0, entries: [] };
+race_tick = 0; finish_count = 0;
